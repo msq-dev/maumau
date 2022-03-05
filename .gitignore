@@ -1,0 +1,8 @@
+/node_modules/
+/public/build/
+
+.prettierrc
+/src/assets/cardimgs/
+
+
+.DS_Store
