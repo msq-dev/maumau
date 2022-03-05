@@ -9,6 +9,7 @@
 
   import {
     username,
+    sortUserCards,
     countPoints,
     noOfPlayers,
     noOfDecks,
@@ -21,7 +22,7 @@
     thePlayers,
     currentCard,
     currentPlayer,
-    sessionEnded,
+    sessionRunning,
   } from "../stores/game.js"
 
   import { onMount } from "svelte"
@@ -34,6 +35,7 @@
   import {
     CARDS_DICT,
     VALUES,
+    RANK_VALUE,
     SUIT_NAMES,
     SUIT_COLOR,
   } from "../assets/cardrefs.js"
@@ -54,35 +56,65 @@
 
   const CARDS = Object.keys(CARDS_DICT)
 
-  // Game init
-  let moves = 0
+  let moves
 
-  let cardDeck = []
+  let _7sPlayed
+  let _7active
+  let _8active
+  let demandedSuit
+
+  let gameRunning
+  let winner
+
+  let showControlsUser
+  let showControlsWish
 
   let pileDiscard = []
   let pileStock = []
-
-  let _7sPlayed = 0
-  let _7active = false
-
-  let _8active = false
-
-  let demandedSuit = ""
-
-  let gameRunning = false
-  let winner = null
-
-  let showUserControls = false
-  let wishControls = false
-
   let chatMessages = []
 
-  const userIndex = Math.floor(Math.random() * $noOfPlayers)
+  let userIndex
+  let cardDeck
 
-  cardDeck = $noOfDecks === 2 ? CARDS.concat(CARDS) : CARDS
+  function setupGame() {
+    moves = 0
+    _7sPlayed = 0
+    _7active = false
+    _8active = false
+    demandedSuit = ""
+    gameRunning = false
+    winner = null
+    showControlsUser = false
+    showControlsWish = false
+
+    pileDiscard = []
+    pileStock = []
+    chatMessages = []
+
+    cardDeck = $noOfDecks === 2 ? CARDS.concat(CARDS) : CARDS
+
+    $thePlayers.forEach((p) => {
+      p.playerHand = []
+      for (let i = 0; i < $cardsPerPlayer; i++) {
+        p.playerHand.push(drawFrom(cardDeck, true))
+      }
+      if (p.isUser && $sortUserCards) {
+        p.playerHand = sortHand(p.playerHand)
+      }
+    })
+
+    pileDiscard = [...pileDiscard, drawFrom(cardDeck, true)]
+    updateCurrentCard(pileDiscard[pileDiscard.length - 1])
+
+    pileStock = shuffle(cardDeck)
+
+    updateCurrentPlayer($thePlayers[0])
+  }
 
   onMount(() => {
-    let initPlayers = []
+    userIndex = Math.floor(Math.random() * $noOfPlayers)
+
+    let players = []
     for (let i = 0; i < $noOfPlayers; i++) {
       const p = {
         playerId: uuidv4(),
@@ -92,20 +124,11 @@
         playerIndex: i,
         isUser: i === userIndex,
       }
-      for (let j = 0; j < $cardsPerPlayer; j++) {
-        p.playerHand.push(drawFrom(cardDeck, true))
-      }
-      initPlayers.push(p)
+      players.push(p)
     }
 
-    updateThePlayers(initPlayers)
-
-    pileDiscard = [...pileDiscard, drawFrom(cardDeck, true)]
-    updateCurrentCard(pileDiscard[pileDiscard.length - 1])
-
-    pileStock = shuffle(cardDeck)
-
-    updateCurrentPlayer($thePlayers[0])
+    updateThePlayers(players)
+    setupGame()
   })
 
   function startPlaying() {
@@ -118,7 +141,7 @@
   }
 
   async function takeTurns() {
-    showUserControls = false
+    showControlsUser = false
     while (gameRunning) {
       await npcMove()
       if ($currentPlayer.isUser) {
@@ -138,7 +161,7 @@
 
   function moveUser() {
     if (!winner) {
-      showUserControls = true
+      showControlsUser = true
     }
   }
 
@@ -158,7 +181,6 @@
   function userMissingTurn() {
     _8active = false
     nextPlayer()
-    // updateThePlayers($thePlayers)
     takeTurns()
   }
 
@@ -168,21 +190,18 @@
     const userCard = event.detail.card
     const cardInstance = event.detail.cardInstance
 
-    if (!isPlayable(userCard)) {
+    if (!isAllowed(userCard)) {
       handleForbidden()
     } else {
-      playUserCard(userCard)
-      if (!wishControls) {
+      playCard(userCard)
+      if (!showControlsWish) {
         nextPlayer()
         takeTurns()
       }
     }
 
-    function isPlayable(card) {
+    function isAllowed(card) {
       if (moves === 0) return true
-
-      const currentRank = $currentCard[0]
-      const currentSuit = demandedSuit || $currentCard[1]
 
       if (_7active) {
         if ($_7on7 && card[0] === "7") {
@@ -197,6 +216,9 @@
         }
         return false
       }
+
+      const currentRank = $currentCard[0]
+      const currentSuit = demandedSuit || $currentCard[1]
 
       if (card[0] === "J") {
         if (currentRank === "J" && $noJackOnJack) {
@@ -217,41 +239,9 @@
     }
   }
 
-  function playUserCard(card) {
-    moves += 1
-    demandedSuit = ""
-
-    const hand = $currentPlayer.playerHand
-    const playedCard = hand.indexOf(card)
-    pileDiscard = [...pileDiscard, hand.splice(playedCard, 1)[0]]
-    updateCurrentCard(pileDiscard[pileDiscard.length - 1])
-    updateThePlayers($thePlayers)
-
-    if (hand.length === 0) {
-      sendChatMessage(`hurra! GEWONNEN!!`)
-      handleWin()
-      return
-    }
-
-    if (card[0] === "7") {
-      _7sPlayed++
-      _7active = true
-    }
-
-    if (card[0] === "8") {
-      _8active = true
-    }
-
-    if (card[0] === "J") {
-      wishControls = true
-    }
-
-    showUserControls = false
-  }
-
   function handleWish(suit) {
     demandedSuit = suit
-    wishControls = false
+    showControlsWish = false
     nextPlayer()
     takeTurns()
   }
@@ -261,10 +251,10 @@
     const currentRank = $currentCard[0]
     const currentSuit = demandedSuit || $currentCard[1]
 
-    if (currentRank === "7" && _7active) {
+    if (_7active) {
       handle_7()
       nextPlayer()
-    } else if (currentRank === "8" && _8active) {
+    } else if (_8active) {
       handle_8()
       nextPlayer()
     } else {
@@ -342,6 +332,7 @@
       }
 
       let aggressiveCards = options.filter((c) => c.value <= 8)
+
       if (aggressiveCards.length && aggressionProbability) {
         playCard(aggressiveCards[0].card)
       } else {
@@ -351,80 +342,107 @@
         playCard(options[options.length - 1].card)
       }
     }
+  }
 
-    function playCard(card) {
-      moves += 1
+  // User functions
+  function sortHand(handArray) {
+    let sortedHand = []
+    Object.keys(SUIT_NAMES).forEach((suit) => {
+      let filteredSuits = handArray.filter((card) => card[1] === suit)
+      filteredSuits.sort((cardA, cardB) => {
+        return RANK_VALUE[cardA] - RANK_VALUE[cardB]
+      })
+      sortedHand = sortedHand.concat(filteredSuits)
+    })
+    return sortedHand
+  }
 
-      demandedSuit = ""
-      const playedCard = hand.indexOf(card)
+  // NPC functions
+  function calculateWish(hand) {
+    const handWithoutJacks = hand.filter((card) => card[0] !== "J")
+    const wish = mode(handWithoutJacks.map((card) => card[1])) ?? "H"
+    return wish
+  }
 
-      if (card[0] === "7") {
-        _7sPlayed++
-        _7active = true
-      }
-      if (card[0] === "8") {
-        _8active = true
-      }
-      if (card[0] === "J") {
-        demandedSuit = calculateWish()
-        sendChatMessage(`ich wünsch mir ${SUIT_NAMES[demandedSuit]}`)
-      }
+  function playableCards(rank, suit, withoutJacks) {
+    let cardsWithValues
 
-      pileDiscard = [...pileDiscard, hand.splice(playedCard, 1)[0]]
-      updateCurrentCard(pileDiscard[pileDiscard.length - 1])
-
-      if (hand.length === 1) {
-        sendChatMessage(`letzte karte :P`)
-      }
-
-      if (hand.length === 0) {
-        sendChatMessage(`hurra! GEWONNEN!!`)
-        handleWin()
-        return
-      }
-    }
-
-    function calculateWish() {
-      const handWithoutJacks = hand.filter((card) => card[0] !== "J")
-      const wish = mode(handWithoutJacks.map((card) => card[1])) ?? "H"
-      return wish
-    }
-
-    function playableCards(rank, suit, withoutJacks) {
-      let cardsWithValues
-
-      if (moves === 0) {
-        cardsWithValues = withoutJacks.map((card) => {
-          return { card, value: VALUES[card[0]] }
-        })
-        return cardsWithValues
-      } else {
-        cardsWithValues = withoutJacks.reduce((handCards, card) => {
-          if (card[0] === rank || card[1] === suit) {
-            const cardWithValue = { card, value: VALUES[card[0]] }
-            handCards.push(cardWithValue)
-          }
-          return handCards
-        }, [])
-        return cardsWithValues
-      }
+    if (moves === 0) {
+      cardsWithValues = withoutJacks.map((card) => {
+        return { card, value: VALUES[card[0]] }
+      })
+      return cardsWithValues
+    } else {
+      cardsWithValues = withoutJacks.reduce((handCards, card) => {
+        if (card[0] === rank || card[1] === suit) {
+          const cardWithValue = { card, value: VALUES[card[0]] }
+          handCards.push(cardWithValue)
+        }
+        return handCards
+      }, [])
+      return cardsWithValues
     }
   }
 
   // Basic game functions
+  function playCard(card) {
+    moves += 1
+    demandedSuit = ""
+
+    const hand = $currentPlayer.playerHand
+    const playedCard = hand.indexOf(card)
+    const isUser = $currentPlayer.isUser
+
+    pileDiscard = [...pileDiscard, hand.splice(playedCard, 1)[0]]
+    updateCurrentCard(pileDiscard[pileDiscard.length - 1])
+    updateThePlayers($thePlayers)
+
+    if (hand.length === 0) {
+      sendChatMessage(`hurra! GEWONNEN!!`)
+      handleWin()
+      return
+    }
+
+    if (hand.length === 1 && !isUser) {
+      sendChatMessage(`letzte karte :P`)
+    }
+
+    if (card[0] === "7") {
+      _7sPlayed++
+      _7active = true
+    }
+    if (card[0] === "8") {
+      _8active = true
+    }
+    if (card[0] === "J") {
+      if (isUser) {
+        showControlsUser = false
+        showControlsWish = true
+        return
+      }
+      demandedSuit = calculateWish(hand)
+      sendChatMessage(`ich wünsch mir ${SUIT_NAMES[demandedSuit]}`)
+    }
+  }
+
   function drawCard() {
     if (!pileStock.length) {
       const newPileStock = pileDiscard.splice(0, pileDiscard.length - 1)
       pileStock = shuffle(newPileStock)
     }
+
     $currentPlayer.playerHand = [
       ...$currentPlayer.playerHand,
       drawFrom(pileStock),
     ]
+
+    if ($currentPlayer.isUser && $sortUserCards) {
+      $currentPlayer.playerHand = sortHand($currentPlayer.playerHand)
+    }
   }
 
   function nextPlayer() {
-    if (!$sessionEnded && gameRunning) {
+    if (gameRunning) {
       const next = $thePlayers.indexOf($currentPlayer) + 1
       if (next === $thePlayers.length) {
         updateCurrentPlayer($thePlayers[0])
@@ -461,9 +479,11 @@
     thePlayers.update((p) => players)
   }
 
-  function endSession(status) {
-    gameRunning = false
-    sessionEnded.update((s) => status)
+  function endSession() {
+    currentCard.set("")
+    currentPlayer.set({})
+    thePlayers.set([])
+    sessionRunning.set(false)
   }
 
   // Animations
@@ -474,7 +494,17 @@
 </script>
 
 <div class="game-table" transition:scale>
-  <div class="pile-discard">
+  <button class="btn btn-quit" on:click={() => endSession()}>Beenden</button>
+
+  {#if winner}
+    <div class="winner-screen">
+      <h1>{winner.playerName} hat gewonnen!</h1>
+      <!-- <button class="btn" on:click={() => setupGame()}>neues Spiel</button> -->
+      <button class="btn" on:click={() => endSession()}>Beenden</button>
+    </div>
+  {/if}
+
+  <div class="pile-container">
     {#if demandedSuit}
       <div
         class="demanded-suit"
@@ -484,19 +514,22 @@
         {SUIT_NAMES[demandedSuit]}
       </div>
     {/if}
-    {#each pileDiscard as card (card)}
-      <div
-        class="pile-item"
-        style:transform={`rotate(${
-          Math.random() * 7 * (Math.random() < 0.5 ? -1 : 1)
-        }deg)`}
-        animate:flip={{ duration: 100 }}
-        in:receive={{ key: card }}
-        out:send={{ key: card }}
-      >
-        <Card {card} isPileCard={true} />
-      </div>
-    {/each}
+
+    <div class="pile-discard">
+      {#each pileDiscard as card (card)}
+        <div
+          class="pile-item"
+          style:transform={`rotate(${
+            Math.random() * 7 * (Math.random() < 0.5 ? -1 : 1)
+          }deg)`}
+          animate:flip={{ duration: 100 }}
+          in:receive={{ key: card }}
+          out:send={{ key: card }}
+        >
+          <Card {card} isPileCard={true} />
+        </div>
+      {/each}
+    </div>
   </div>
 
   {#each $thePlayers as p}
@@ -517,7 +550,7 @@
         >
           <Card
             {card}
-            isUserCard={p.playerIndex === userIndex}
+            isUserCard={p.isUser}
             on:userPlayedCard={handleUserCard}
           />
         </div>
@@ -535,7 +568,7 @@
     {/each}
   </div>
 
-  {#if wishControls}
+  {#if showControlsWish}
     <div class="wish-controls">
       {#each Object.entries(SUIT_NAMES) as suit}
         <button
@@ -549,7 +582,7 @@
     </div>
   {/if}
 
-  {#if showUserControls}
+  {#if showControlsUser}
     <UserControls
       mustDrawCards={_7active}
       amountOfSevens={_7sPlayed}
@@ -558,36 +591,41 @@
       on:missTurn={userMissingTurn}
     />
   {/if}
+
   {#if !gameRunning && !winner}
     <button class="btn btn-play" on:click={startPlaying} transition:fade
       >Spielen</button
     >
   {/if}
-  <button class="btn btn-quit" on:click={() => endSession(true)}>Beenden</button
-  >
 </div>
 
 <style>
   .game-table {
-    position: absolute;
     display: grid;
     place-items: center;
-    grid-template-columns: 5rem 10rem 5rem;
+    grid-template-columns: 5rem 8rem 5rem;
     grid-template-rows: 5rem 10rem 10rem 2rem;
     gap: 1em;
-    width: 100%;
     height: 100%;
     padding: 1em;
     background-color: forestgreen;
   }
 
-  .pile-discard {
+  .pile-container {
     place-self: center;
     grid-column: 2;
     grid-row: 2;
     display: grid;
     place-items: center;
+    width: 100%;
+    height: 100%;
     position: relative;
+  }
+
+  .pile-discard {
+    position: absolute;
+    top: 15%;
+    left: 25%;
   }
 
   .pile-item {
@@ -601,10 +639,6 @@
     mix-blend-mode: hard-light;
   }
 
-  /* .pile-stock {
-    font-size: 4rem;
-  } */
-
   .card-wrapper {
     grid-row: 1;
   }
@@ -616,10 +650,22 @@
     width: 65%;
   }
 
+  .wish-controls {
+    /* position: absolute;
+    bottom: 1em; */
+    grid-column: 2;
+    grid-row: 4;
+    display: flex;
+    gap: 0.75em;
+  }
+
+  .wish-controls > button {
+    padding: 0.2em 0.5em;
+    font-size: 1.5rem;
+    background-color: #fff;
+  }
+
   .btn-play {
-    /* position: absolute; */
-    /* bottom: 0; */
-    /* margin-bottom: 2em; */
     grid-column: 2;
     grid-row: 4;
     font-size: 0.8rem;
@@ -639,16 +685,23 @@
     border-bottom-right-radius: 0;
   }
 
-  .wish-controls {
+  .winner-screen {
     position: absolute;
-    bottom: 1em;
+    inset: 0;
+    z-index: 50;
     display: flex;
-    gap: 0.75em;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1em;
+    text-align: center;
+    padding: 1em;
+    margin: 1em;
+    background-color: #0006;
+    border-radius: 1em;
   }
 
-  .wish-controls > button {
-    padding: 0.2em 0.5em;
-    font-size: 1.5rem;
-    background-color: #fff;
+  .winner-screen > h1 {
+    color: #fff;
   }
 </style>

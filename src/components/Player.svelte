@@ -1,22 +1,6 @@
 <script>
-  // import { onMount, afterUpdate } from "svelte"
   import { noOfPlayers } from "../stores/settings.js"
   import { currentPlayer } from "../stores/game.js"
-  import { SUIT_COLOR } from "../assets/cardrefs.js"
-
-  const SUITS = [...Object.keys(SUIT_COLOR)]
-
-  // function sortHand(handArray) {
-  //   let sortedHand = []
-  //   SUITS.forEach((suit) => {
-  //     let filteredSuits = handArray.filter((card) => card[1] === suit)
-  //     filteredSuits.sort(
-  //       (cardA, cardB) => RANK_VALUE[cardA] - RANK_VALUE[cardB]
-  //     )
-  //     sortedHand = sortedHand.concat(filteredSuits)
-  //   })
-  //   return sortedHand
-  // }
 
   export let playerId = ""
   export let playerName = ""
@@ -29,27 +13,26 @@
       return "player-user"
     }
 
-    const FAC_00 = 1 - userIndex
-    const FAC_01 = $noOfPlayers - 1
-    const FAC_02 = -FAC_01 + userIndex
+    const userNeighbor_01 = 1 - userIndex
+    const userNeighbor_02 = -($noOfPlayers - 1) + userIndex
 
+    // user == first
     if (userIndex === $noOfPlayers - $noOfPlayers) {
-      // user == first
-      if (-playerIndex === -FAC_00) {
+      if (-playerIndex === -userNeighbor_01) {
         return "player-left"
       }
-      if (-playerIndex === FAC_02) {
+      if (-playerIndex === userNeighbor_02) {
         return "player-right"
       }
       return "player-opposite"
     }
 
-    if (userIndex === FAC_01) {
-      // user == last
-      if (-playerIndex === FAC_00) {
+    // user == last
+    if (userIndex === $noOfPlayers - 1) {
+      if (-playerIndex === userNeighbor_01) {
         return "player-right"
       }
-      if (playerIndex === FAC_02) {
+      if (playerIndex === userNeighbor_02) {
         return "player-left"
       }
       return "player-opposite"
@@ -79,12 +62,6 @@
       }
     }
   }
-
-  // afterUpdate(() => {
-  //   if ($sortUserCards && playerIndex === userIndex) {
-  //     playerHand = sortHand(playerHand)
-  //   }
-  // })
 </script>
 
 <div class="player {posAtTable()}">

@@ -35,8 +35,6 @@
 
 <style>
   .user-controls {
-    /* position: absolute;
-    bottom: 1em; */
     grid-column: 2;
     grid-row: 4;
     display: flex;

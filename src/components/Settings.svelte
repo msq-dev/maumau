@@ -53,9 +53,9 @@
     <h3 class="headline-settings">Einstellungen</h3>
     <input type="text" bind:value={$username} />
 
-    <!-- <Checkbox checkboxName={"sortUserCards"} bind:val={$sortUserCards}
+    <Checkbox checkboxName={"sortUserCards"} bind:val={$sortUserCards}
       >meine Karten sortieren</Checkbox
-    > -->
+    >
     <!-- <Checkbox checkboxName={"countPoints"} bind:val={$countPoints}
       >Punkte zählen</Checkbox
     > -->
@@ -94,14 +94,14 @@
       Geschwindigkeit: {$npcSpeed}&#8239;ms
     </label>
 
-    <label>
+    <!-- <label>
       <input type="radio" bind:group={$pattern} value={"french"} />
       Französisches Blatt
     </label>
     <label>
       <input type="radio" bind:group={$pattern} value={"unicode"} />
       Unicode
-    </label>
+    </label> -->
 
     <button class="btn btn-close" on:click={close}>Schließen</button>
   </div>

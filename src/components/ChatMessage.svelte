@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte"
-  import { fade, fly } from "svelte/transition"
+  import { fade, scale } from "svelte/transition"
 
   export let senderName
   export let senderColor
@@ -8,7 +8,7 @@
 
   let showMessage = false
 
-  const LIFETIME = 4000
+  const LIFETIME = 3000
 
   onMount(() => {
     showMessage = true
@@ -19,7 +19,7 @@
 </script>
 
 {#if showMessage}
-  <div class="chat-message" in:fly={{ y: 50, duration: 200 }} out:fade>
+  <div class="chat-message" in:scale out:fade>
     <span style:color={senderColor} style:font-weight="700"
       >{senderName}:
     </span>&nbsp;{text}

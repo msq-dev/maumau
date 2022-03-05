@@ -1,7 +1,7 @@
 <script>
-  import { sessionEnded } from "./stores/game.js"
+  import { sessionRunning } from "./stores/game.js"
   import Settings from "./components/Settings.svelte"
-  import Game from "./components/Game.svelte"
+  import GameTable from "./components/GameTable.svelte"
 
   let settingsOpen = false
 
@@ -9,20 +9,20 @@
     settingsOpen = event.detail.payload
   }
 
-  function endGame(status) {
-    sessionEnded.update((s) => status)
+  function startSession() {
+    sessionRunning.set(true)
   }
 </script>
 
-<main style:background-color={$sessionEnded ? "" : "forestgreen"}>
+<main style:background-color={$sessionRunning ? "forestgreen" : ""}>
   <Settings {settingsOpen} on:close={closeSettings} />
 
-  {#if !$sessionEnded}
-    <Game />
+  {#if $sessionRunning}
+    <GameTable />
   {:else}
     <div class="app-title">Mau<span>Mau</span></div>
-    <button class="btn btn-start" on:click={() => endGame(false)}
-      >Zum Spiel</button
+    <button class="btn btn-start" on:click={() => startSession()}
+      >Zum Tisch</button
     >
     <button class="btn btn-settings" on:click={() => (settingsOpen = true)}
       >Einstellungen</button
@@ -37,9 +37,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 100%;
     height: 100vh;
-    margin: 0 auto;
   }
 
   .app-title {
@@ -51,6 +49,11 @@
 
   .app-title > span {
     color: darkslategray;
+  }
+
+  :global(.btn) {
+    padding: 0.25em 0.75em;
+    border-radius: 0.5em;
   }
 
   .btn-start {

@@ -39,6 +39,7 @@
       style:font-size={isPileCard ? "7rem" : "3rem"}
       style:color={isPileCard ? SUIT_COLOR[card[1]] : "darkblue"}
     >
+      <!-- {CARDS_DICT[card].unicodeChar} -->
       {isPileCard ? CARDS_DICT[card].unicodeChar : "🂠"}
     </div>
   {:else}
