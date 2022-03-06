@@ -56,8 +56,6 @@
 
   const CARDS = Object.keys(CARDS_DICT)
 
-  let moves
-
   let _7sPlayed
   let _7active
   let _8active
@@ -77,7 +75,6 @@
   let cardDeck
 
   function setupGame() {
-    moves = 0
     _7sPlayed = 0
     _7active = false
     _8active = false
@@ -201,7 +198,10 @@
     }
 
     function isAllowed(card) {
-      if (moves === 0) return true
+      const currentRank = $currentCard[0]
+      const currentSuit = demandedSuit || $currentCard[1]
+
+      if (currentRank === "J" && !demandedSuit) return true
 
       if (_7active) {
         if ($_7on7 && card[0] === "7") {
@@ -216,9 +216,6 @@
         }
         return false
       }
-
-      const currentRank = $currentCard[0]
-      const currentSuit = demandedSuit || $currentCard[1]
 
       if (card[0] === "J") {
         if (currentRank === "J" && $noJackOnJack) {
@@ -367,7 +364,7 @@
   function playableCards(rank, suit, withoutJacks) {
     let cardsWithValues
 
-    if (moves === 0) {
+    if ($currentCard[0] === "J" && !demandedSuit) {
       cardsWithValues = withoutJacks.map((card) => {
         return { card, value: VALUES[card[0]] }
       })
@@ -386,7 +383,6 @@
 
   // Basic game functions
   function playCard(card) {
-    moves += 1
     demandedSuit = ""
 
     const hand = $currentPlayer.playerHand
