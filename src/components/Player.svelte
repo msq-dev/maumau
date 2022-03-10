@@ -2,14 +2,17 @@
   import { noOfPlayers } from "../stores/settings.js"
   import { currentPlayer } from "../stores/game.js"
 
-  export let playerId = ""
-  export let playerName = ""
+  export let playerId
+  export let playerName
   export let playerHand
-  export let playerIndex = 0
-  export let userIndex = 0
+  export let playerIndex
+  export let userIndex
+  export let isUser
+
+  $: isCurrentPlayer = $currentPlayer.playerId === playerId
 
   function posAtTable() {
-    if (playerIndex === userIndex) {
+    if (isUser) {
       return "player-user"
     }
 
@@ -71,11 +74,7 @@
   >
     <slot />
   </div>
-  <div
-    class="player-name"
-    style:color={$currentPlayer.playerId === playerId ? "blue" : ""}
-    style:font-weight={$currentPlayer.playerId === playerId ? 700 : 400}
-  >
+  <div class="player-name" class:isCurrentPlayer>
     {playerName}
   </div>
 </div>
@@ -105,14 +104,6 @@
     place-self: end;
   }
 
-  /* .player-left .player-name {
-    transform: rotate(90deg);
-  }
-
-  .player-right .player-name {
-    transform: rotate(-90deg);
-  } */
-
   .player-opposite {
     grid-column: 2 / 3;
     grid-row: 1;
@@ -123,13 +114,16 @@
     display: grid;
     row-gap: 0.5rem;
     width: fit-content;
-    /* height: fit-content; */
   }
 
   .player-name {
     grid-row: 2;
     place-self: start;
     white-space: nowrap;
-    /* margin-top: 0.5em; */
+  }
+
+  .isCurrentPlayer {
+    color: blue;
+    font-weight: 700;
   }
 </style>

@@ -5,8 +5,8 @@
 
   let settingsOpen = false
 
-  function closeSettings(event) {
-    settingsOpen = event.detail.payload
+  function closeSettings() {
+    settingsOpen = false
   }
 
   function startSession() {

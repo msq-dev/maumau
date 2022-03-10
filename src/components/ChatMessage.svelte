@@ -2,9 +2,16 @@
   import { onMount } from "svelte"
   import { fade, scale } from "svelte/transition"
 
-  export let senderName
-  export let senderColor
-  export let text
+  const PLAYER_CLR = [
+    "mediumvioletred",
+    "fuchsia",
+    "mediumblue",
+    "firebrick",
+    "darkorange",
+  ]
+
+  export let sender
+  export let content
 
   let showMessage = false
 
@@ -20,9 +27,9 @@
 
 {#if showMessage}
   <div class="chat-message" in:scale out:fade>
-    <span style:color={senderColor} style:font-weight="700"
-      >{senderName}:
-    </span>&nbsp;{text}
+    <span style:color={PLAYER_CLR[sender.playerIndex]} style:font-weight="700"
+      >{sender.playerName}:
+    </span>&nbsp;{content}
   </div>
 {/if}
 

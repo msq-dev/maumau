@@ -1,5 +1,5 @@
 import { writable, derived } from "svelte/store"
-import { CARDS_PER_PLAYER } from "../assets/cardrefs.js"
+import { CARDS_PER_PLAYER } from "../assets/carddata.js"
 
 export const username = writable("Userino")
 export const sortUserCards = writable(true)
@@ -14,4 +14,4 @@ export const cardsPerPlayer = derived(noOfPlayers, ($noOfPlayers) => {
   return CARDS_PER_PLAYER[String($noOfPlayers)]
 })
 
-export const pattern = writable("unicode")
+export const pattern = writable("french")

@@ -26,9 +26,7 @@
   const dispatch = createEventDispatcher()
 
   function close() {
-    dispatch("close", {
-      payload: false,
-    })
+    dispatch("close")
   }
 </script>
 
@@ -56,9 +54,9 @@
     <Checkbox checkboxName={"sortUserCards"} bind:val={$sortUserCards}
       >meine Karten sortieren</Checkbox
     >
-    <!-- <Checkbox checkboxName={"countPoints"} bind:val={$countPoints}
+    <Checkbox checkboxName={"countPoints"} bind:val={$countPoints}
       >Punkte zählen</Checkbox
-    > -->
+    >
 
     <input
       type="range"
@@ -89,19 +87,20 @@
       bind:value={$npcSpeed}
       min="100"
       max="3000"
+      step="10"
     />
     <label for="speed">
       Geschwindigkeit: {$npcSpeed}&#8239;ms
     </label>
 
-    <!-- <label>
+    <label>
       <input type="radio" bind:group={$pattern} value={"french"} />
       Französisches Blatt
     </label>
     <label>
       <input type="radio" bind:group={$pattern} value={"unicode"} />
       Unicode
-    </label> -->
+    </label>
 
     <button class="btn btn-close" on:click={close}>Schließen</button>
   </div>
