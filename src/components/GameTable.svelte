@@ -61,6 +61,7 @@
   let pileStock = []
   let chatMessages = []
   let players = []
+  let losers = []
 
   let userIndex
   let cardDeck
@@ -79,6 +80,7 @@
 
     pileStock = []
     chatMessages = []
+    losers = []
 
     cardDeck = $noOfDecks === 2 ? CARDS.concat(CARDS) : CARDS
 
@@ -93,10 +95,8 @@
     })
 
     $pileDiscard = [...$pileDiscard, drawFrom(cardDeck, true)]
-
     pileStock = shuffle(cardDeck)
-
-    updateCurrentPlayer(players[0])
+    $currentPlayer = players[0]
   }
 
   onMount(() => {
@@ -407,9 +407,9 @@
     if (gameRunning) {
       const next = players.indexOf($currentPlayer) + 1
       if (next === players.length) {
-        updateCurrentPlayer(players[0])
+        $currentPlayer = players[0]
       } else {
-        updateCurrentPlayer(players[next])
+        $currentPlayer = players[next]
       }
     }
   }
@@ -417,6 +417,16 @@
   function handleWin() {
     gameRunning = false
     winner = $currentPlayer
+    if ($countPoints) {
+      losers = players.filter((p) => p !== $currentPlayer)
+      losers = losers.map((l) => [
+        l.playerName,
+        l.playerHand.reduce(
+          (partialSum, card) => partialSum + VALUES[card[0]],
+          0
+        ),
+      ])
+    }
   }
 
   // Chat function
@@ -428,11 +438,7 @@
     chatMessages = [...chatMessages, messageObject]
   }
 
-  // Store functions
-  function updateCurrentPlayer(player) {
-    currentPlayer.update((p) => player)
-  }
-
+  // Store function
   function endSession() {
     pileDiscard.set([])
     currentPlayer.set({})
@@ -452,7 +458,17 @@
   {#if winner}
     <div class="winner-screen" transition:scale>
       <h1>{winner.playerName} hat gewonnen!</h1>
-      <!-- <button class="btn" on:click={() => setupGame()}>neues Spiel</button> -->
+      {#if $countPoints}
+        <div class="loser-table">
+          {#each losers as loser}
+            <div class="loser-name">{loser[0]}:</div>
+            <div class="lost-by">-{loser[1]} Punkte</div>
+          {/each}
+        </div>
+      {/if}
+      <!-- <button class="btn btn-restart" on:click={() => setupGame()}
+        >neues Spiel</button
+      > -->
       <button class="btn" on:click={() => endSession()}>Beenden</button>
     </div>
   {/if}
@@ -576,7 +592,6 @@
   .btn-play {
     grid-column: 2;
     grid-row: 4;
-    font-size: 0.8rem;
     color: forestgreen;
     background-color: #fff;
   }
@@ -585,12 +600,16 @@
     position: absolute;
     top: 0;
     right: 0;
-    font-size: 0.8rem;
     color: #fff;
     background-color: tomato;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
+  }
+
+  .btn-restart {
+    color: #fff;
+    background-color: forestgreen;
   }
 
   .winner-screen {
@@ -605,11 +624,22 @@
     text-align: center;
     padding: 1em;
     margin: 1em;
-    background-color: #0006;
+    background-color: #000c;
     border-radius: 1em;
   }
 
-  .winner-screen > h1 {
+  .winner-screen > *:not(button) {
     color: #fff;
+  }
+
+  .loser-table {
+    display: grid;
+    grid-template-columns: 9ch auto;
+    text-align: initial;
+  }
+
+  .lost-by {
+    font-weight: 700;
+    color: tomato;
   }
 </style>

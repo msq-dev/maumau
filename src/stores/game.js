@@ -1,6 +1,6 @@
 import { writable, derived } from "svelte/store"
 
-export const sessionRunning = writable(true)
+export const sessionRunning = writable(false)
 export const pileDiscard = writable([])
 export const currentCard = derived(
   pileDiscard,
