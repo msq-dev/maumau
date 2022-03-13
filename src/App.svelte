@@ -1,4 +1,5 @@
 <script>
+  import { fade } from "svelte/transition"
   import { sessionRunning } from "./stores/game.js"
   import Settings from "./components/Settings.svelte"
   import GameTable from "./components/GameTable.svelte"
@@ -14,29 +15,29 @@
   }
 </script>
 
-<main style:background-color={$sessionRunning ? "forestgreen" : ""}>
+<main
+  class="flex-col"
+  style:background-color={$sessionRunning ? "forestgreen" : ""}
+>
   <Settings {settingsOpen} on:close={closeSettings} />
 
   {#if $sessionRunning}
     <GameTable />
   {:else}
-    <div class="app-title">Mau<span>Mau</span></div>
-    <button class="btn btn-start" on:click={() => startSession()}
-      >Zum Tisch</button
-    >
-    <button class="btn btn-settings" on:click={() => (settingsOpen = true)}
-      >Einstellungen</button
-    >
+    <div class="flex-col start-screen" in:fade={{ delay: 400 }}>
+      <div class="app-title">Mau<span>Mau</span></div>
+      <button class="btn btn-start" on:click={() => startSession()}
+        >Zum Tisch</button
+      >
+      <button class="btn btn-settings" on:click={() => (settingsOpen = true)}
+        >Einstellungen</button
+      >
+    </div>
   {/if}
 </main>
 
 <style>
   main {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     height: 100vh;
   }
 

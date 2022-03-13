@@ -607,11 +607,6 @@
     border-bottom-right-radius: 0;
   }
 
-  .btn-restart {
-    color: #fff;
-    background-color: forestgreen;
-  }
-
   .winner-screen {
     position: absolute;
     inset: 0;

@@ -93,14 +93,20 @@
       Geschwindigkeit: {$npcSpeed}&#8239;ms
     </label>
 
-    <label>
-      <input type="radio" bind:group={$pattern} value={"french"} />
-      Französisches Blatt
-    </label>
-    <label>
-      <input type="radio" bind:group={$pattern} value={"unicode"} />
-      Unicode
-    </label>
+    <div class="radio-group">
+      <input id="french" type="radio" bind:group={$pattern} value={"french"} />
+      <label for="french"> Französisches Bild</label>
+    </div>
+
+    <div class="radio-group">
+      <input
+        id="unicode"
+        type="radio"
+        bind:group={$pattern}
+        value={"unicode"}
+      />
+      <label for="unicode">Unicode-Bild</label>
+    </div>
 
     <button class="btn btn-close" on:click={close}>Schließen</button>
   </div>
@@ -109,11 +115,13 @@
 <style>
   .settings-container {
     position: absolute;
+    z-index: 5;
     inset: 0;
     display: flex;
     flex-direction: column;
     gap: 0.5em;
     padding: 1em;
+    height: fit-content;
     background-color: #fff;
   }
 
@@ -134,7 +142,17 @@
     margin-bottom: 1em;
   }
 
+  .radio-group {
+    display: flex;
+    gap: 0.5em;
+  }
+
+  .radio-group:last-of-type {
+    margin-bottom: 1em;
+  }
+
   .btn-close {
     background-color: gainsboro;
+    margin-bottom: 1em;
   }
 </style>

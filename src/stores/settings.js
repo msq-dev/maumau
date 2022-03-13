@@ -14,4 +14,4 @@ export const cardsPerPlayer = derived(noOfPlayers, ($noOfPlayers) => {
   return CARDS_PER_PLAYER[String($noOfPlayers)]
 })
 
-export const pattern = writable("unicode")
+export const pattern = writable("french")
