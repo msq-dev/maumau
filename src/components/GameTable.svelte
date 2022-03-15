@@ -2,7 +2,6 @@
   import { onMount } from "svelte"
   import { flip } from "svelte/animate"
   import { scale, crossfade } from "svelte/transition"
-  import { expoOut } from "svelte/easing"
   import { v4 as uuidv4 } from "uuid"
 
   import {
@@ -422,7 +421,9 @@
       losers = losers.map((l) => [
         l.playerName,
         l.playerHand.reduce(
-          (partialSum, card) => partialSum + VALUES[card[0]],
+          (partialSum, card) =>
+            partialSum +
+            ($currentCard[0] === "J" ? VALUES[card[0]] * 2 : VALUES[card[0]]),
           0
         ),
       ])
@@ -448,7 +449,6 @@
   // Animations
   const [send, receive] = crossfade({
     duration: (d) => Math.sqrt(d * 1000),
-    easing: expoOut,
   })
 </script>
 
@@ -506,7 +506,9 @@
       {#each p.playerHand as card, index (card)}
         <div
           class="hand-item"
-          style:grid-column={`${index + 1} / span 2`}
+          style:grid-column={p.playerHand.length > 1
+            ? `${index + 1} / span 2`
+            : ""}
           animate:flip={{ duration: 100 }}
           in:receive={{ key: card }}
           out:send={{ key: card }}
@@ -532,9 +534,9 @@
   {/if}
 
   {#if !gameRunning && !winner}
-    <button class="btn btn-play" on:click={startPlaying} transition:scale
-      >Spielen</button
-    >
+    <div class="overlay" transition:scale>
+      <button class="btn btn-play" on:click={startPlaying}>Spielen</button>
+    </div>
   {/if}
 </div>
 
@@ -563,6 +565,8 @@
 
   .pile-discard {
     position: absolute;
+    width: 100%;
+    height: 100%;
     top: 15%;
     left: 25%;
   }
@@ -607,6 +611,7 @@
     border-bottom-right-radius: 0;
   }
 
+  .overlay,
   .winner-screen {
     position: absolute;
     inset: 0;

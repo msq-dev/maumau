@@ -95,7 +95,8 @@
   .player-left {
     grid-column: 1;
     grid-row: 2;
-    place-self: start;
+    place-self: center;
+    margin-bottom: 1.5em;
   }
 
   .player-right {
@@ -113,6 +114,16 @@
   .player-hand {
     display: grid;
     row-gap: 0.5rem;
+  }
+
+  .player-left > .player-hand,
+  .player-right > .player-hand,
+  .player-opposite > .player-hand {
+    height: 4rem;
+    width: 5rem;
+  }
+
+  .player-user > .player-hand {
     width: fit-content;
   }
 

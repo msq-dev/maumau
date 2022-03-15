@@ -64,7 +64,6 @@
   }
 
   .btn-control {
-    font-size: 0.8rem;
     color: forestgreen;
     background-color: #fff;
   }
@@ -78,7 +77,7 @@
 
   .wish-controls > button {
     padding: 0.2em 0.5em;
-    font-size: 1.5rem;
+    font-size: 150%;
     background-color: #fff;
   }
 </style>

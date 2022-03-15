@@ -97,7 +97,7 @@ const CARDS_DICT = {
   "0C": {
     name: "0C",
     unicodeChar: "🃚",
-    spriteCoords: { x: 361, y: 1 },
+    spriteCoords: { x: 359, y: 1 },
   },
   JC: {
     name: "JC",
